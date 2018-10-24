@@ -23,23 +23,17 @@ ray compute_viewing_ray(int width,int height,int i,int j,float near_distance,par
     vec_u.y = 0;
     vec_u.z = 0;
     parser::Vec3f gaze_up;
-    if(gaze.x | up.x == 0){
-        vec_u.x = 1;
-    }
-    else if(gaze.y | up.y == 0){
-        vec_u.y = 1;
-    }
-    else if(gaze.z | up.z == 0){
-        vec_u.z = 1;
-    }
+    gaze_up = up.crossprod(gaze*(-1));
     
     parser::Vec3f d;
     
     
-    /*compute d = -w.d + l.u + t.v + s_u.u - s_v.v */
+    /*compute d = -w.d + l.u + t.v + s_u.u - s_v.v 
     d.x = gaze.x*near_distance + vec_u.x*near_plane.w + up.x*near_plane.z + (((near_plane.x - near_plane.w)*(i + 0.5))/width)*vec_u.x - (((near_plane.z - near_plane.y)*(j + 0.5))/height)*up.x;
     d.y = gaze.y*near_distance + vec_u.y*near_plane.w + up.y*near_plane.z + (((near_plane.x - near_plane.w)*(i + 0.5))/width)*vec_u.y - (((near_plane.z - near_plane.y)*(j + 0.5))/height)*up.y;
-    d.z = gaze.z*near_distance + vec_u.z*near_plane.w + up.z*near_plane.z + (((near_plane.x - near_plane.w)*(i + 0.5))/width)*vec_u.z - (((near_plane.z - near_plane.y)*(j + 0.5))/height)*up.z;
+    d.z = gaze.z*near_distance + vec_u.z*near_plane.w + up.z*near_plane.z + (((near_plane.x - near_plane.w)*(i + 0.5))/width)*vec_u.z - (((near_plane.z - near_plane.y)*(j + 0.5))/height)*up.z;*/
+    
+    d = (gaze*near_distance) + (vec_u*near_plane.w) + up*near_plane.z + vec_u*(((near_plane.x - near_plane.w)*(i + 0.5))/width) - up*(((near_plane.z - near_plane.y)*(j + 0.5))/height);
     
     ray result;
     result.o = e;
@@ -108,7 +102,7 @@ int main(int argc, char* argv[])
         {   0,   0,   0 },  // Black
     };
 
-    int width = 640, height = 480;
+    width = 640, height = 480;
     int columnWidth = width / 8;
 
     unsigned char* image = new unsigned char [width * height * 3];

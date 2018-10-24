@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <math.h>
 
 namespace parser
 {
@@ -11,6 +12,77 @@ namespace parser
     struct Vec3f
     {
         float x, y, z;
+        
+        Vec3f(int x=0,int y=0,int z=0): x(x),y(y),z(z)
+        {            
+        }
+        
+        Vec3f& operator=(const Vec3f& vec)
+        {
+            x = vec.x;
+            y = vec.y;
+            z = vec.z;
+            return *this;
+        }
+        
+        Vec3f dotprod(const Vec3f& vec) const
+        {
+            return Vec3f(vec.x+x,vec.y+y,vec.z+z);
+        }
+        
+        Vec3f operator-(const Vec3f& vec) const
+        {
+            return Vec3f(vec.x-x,vec.y-y,vec.z-z);
+        }
+        
+        Vec3f operator+(const Vec3f& vec) const
+        {
+            return Vec3f(vec.x+x,vec.y+y,vec.z+z);
+        }
+        
+        Vec3f& normalize()
+        {
+            int magnitude = sqrt(x*x+y*y+z*z);
+            x = x/magnitude;
+            y = y/magnitude;
+            z = z/magnitude;
+            return *this;
+        }
+        
+        int operator*(const Vec3f vec) const
+        {
+            return x*vec.x + y*vec.y + z*vec.z;
+        }
+        
+        double magnitude() const
+        {
+            return sqrt(x*x+y*y+z*z);
+        }
+        
+        Vec3f crossprod(const Vec3f& vec) const
+        {
+            /* | i  j  k |
+               | x  y  z |
+               | a  b  c |
+       i*(yc-bz) -j*(xc-az) + k(xb-ay) 
+                                        */
+            
+            return Vec3f(y*vec.z - vec.y*z,-(x*vec.z-vec.x*z),x*vec.y-vec.x*y);
+        }
+        
+        Vec3f operator*(int a) const
+        {
+            return Vec3f(x*a,y*a,z*a);
+        }
+        Vec3f operator*(float a) const
+        {
+            return Vec3f(x*a,y*a,z*a);
+        }
+        Vec3f operator*(double a) const
+        {
+            return Vec3f(x*a,y*a,z*a);
+        }
+        
     };
 
     struct Vec3i
