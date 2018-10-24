@@ -13,7 +13,7 @@ namespace parser
     {
         float x, y, z;
         
-        Vec3f(int x=0,int y=0,int z=0): x(x),y(y),z(z)
+        Vec3f(float x=0,float y=0,float z=0): x(x),y(y),z(z)
         {            
         }
         
@@ -88,6 +88,18 @@ namespace parser
     struct Vec3i
     {
         int x, y, z;
+        Vec3i(int x=0,int y=0,int z=0): x(x),y(y),z(z)
+        {            
+        }
+        Vec3i operator-(const Vec3f& vec) const
+        {
+            return Vec3i(vec.x-x,vec.y-y,vec.z-z);
+        }
+        
+        Vec3i operator+(const Vec3f& vec) const
+        {
+            return Vec3i(vec.x+x,vec.y+y,vec.z+z);
+        }        
     };
 
     struct Vec4f
