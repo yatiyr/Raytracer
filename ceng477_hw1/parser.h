@@ -25,14 +25,19 @@ namespace parser
             return *this;
         }
         
-        Vec3f dotprod(const Vec3f& vec) const
+        float dotprod(const Vec3f& vec) const
         {
-            return Vec3f(vec.x+x,vec.y+y,vec.z+z);
+            return x*vec.x + y*vec.y + z*vec.z; 
         }
         
         Vec3f operator-(const Vec3f& vec) const
         {
             return Vec3f(vec.x-x,vec.y-y,vec.z-z);
+        }
+        
+        Vec3f operator-() const
+        {
+            return Vec3f(-x,-y,-z);
         }
         
         Vec3f operator+(const Vec3f& vec) const
@@ -49,10 +54,10 @@ namespace parser
             return *this;
         }
         
-        int operator*(const Vec3f vec) const
+        /*int operator*(const Vec3f vec) const
         {
             return x*vec.x + y*vec.y + z*vec.z;
-        }
+        } */
         
         double magnitude() const
         {

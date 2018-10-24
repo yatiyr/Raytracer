@@ -14,6 +14,42 @@ struct ray {
 
 //ray compute_viewing_ray(parser::vec3f u,parser::vec3f v,)
 
+parser::Vec3f sphere_intersection(parser::Scene scene,parser::Sphere sphere, ray ray)
+{
+    parser::Vec3f center_vertex = scene.vertex_data[sphere.center_vertex_id];
+    
+    parser::Vec3f false_indicator(-5,-5,-5);
+    parser::Vec3f result;
+    
+    double t;
+    double first_t;
+    double second_t;
+    double min_t;
+    
+    double determinant =pow(ray.d.dotprod(ray.o-center_vertex),2) - (ray.d.dotprod(ray.d))*((ray.o-center_vertex).dotprod(ray.o-center_vertex)) - sphere.radius*sphere.radius;
+    
+    if(determinant<0)
+    {
+        return false_indicator;
+    }
+    
+    else if(determinant == 0)
+    {
+      t =(-ray.d.dotprod(ray.o-center_vertex))/ray.d.dotprod(ray.d);
+      result = ray.o + ray.d*t;
+    }
+    
+    else
+    {
+      first_t = (-ray.d.dotprod(ray.o-center_vertex) + sqrt(determinant))/ray.d.dotprod(ray.d);        
+      second_t = (-ray.d.dotprod(ray.o-center_vertex) - sqrt(determinant))/ray.d.dotprod(ray.d); 
+      min_t = fmin(first_t,second_t);
+      
+      result = ray.o + ray.d*min_t;
+    }
+    
+    return result;
+}
 
 ray compute_viewing_ray(int width,int height,int i,int j,float near_distance,parser::Vec4f near_plane,parser::Vec3f e,parser::Vec3f up,parser::Vec3f gaze){
     
@@ -49,7 +85,6 @@ int main(int argc, char* argv[])
     parser::Scene scene;
 
     scene.loadFromXml(argv[1]);
-    
     int height = 0;
     int width = 0;
     float near_distance = 0;
