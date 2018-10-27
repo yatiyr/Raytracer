@@ -2,7 +2,7 @@
 #include "parser.h"
 #include "ppm.h"
 #include <cmath>
-
+#include <float.h>
 
 typedef unsigned char RGB[3];
 
@@ -14,19 +14,27 @@ struct ray {
 
 //ray compute_viewing_ray(parser::vec3f u,parser::vec3f v,)
 
-parser::Vec3f sphere_intersection(parser::Scene scene,parser::Sphere sphere, ray ray)
+parser::Vec3f false_indicator(FLT_MIN,FLT_MIN,FLT_MIN);
+
+float find_matrix_determinant(parser::Vec3f v1, parser::Vec3f v2, parser::Vec3f v3)
+{
+    float determinant = v1.x*(v2.y*v3.z-v2.z*v3.y)
+                       -v2.x*(v1.y*v3.z-v1.z*v3.y)
+                       +v3.x*(v1.y*v2.z-v1.z*v2.y);
+    return determinant;
+}
+
+parser::Vec3f sphere_intersection(parser::Scene scene,parser::Sphere sphere, ray ray,float tmin)
 {
     parser::Vec3f center_vertex = scene.vertex_data[sphere.center_vertex_id];
-    
-    parser::Vec3f false_indicator(-5,-5,-5);
     parser::Vec3f result;
     
-    double t;
-    double first_t;
-    double second_t;
-    double min_t;
+    float t;
+    float first_t;
+    float second_t;
+    float min_t;
     
-    double determinant =pow(ray.d.dotprod(ray.o-center_vertex),2) - (ray.d.dotprod(ray.d))*((ray.o-center_vertex).dotprod(ray.o-center_vertex)) - sphere.radius*sphere.radius;
+    float determinant =pow(ray.d.dotprod(ray.o-center_vertex),2) - (ray.d.dotprod(ray.d))*((ray.o-center_vertex).dotprod(ray.o-center_vertex)) - sphere.radius*sphere.radius;
     
     if(determinant<0)
     {
@@ -45,12 +53,45 @@ parser::Vec3f sphere_intersection(parser::Scene scene,parser::Sphere sphere, ray
       second_t = (-ray.d.dotprod(ray.o-center_vertex) - sqrt(determinant))/ray.d.dotprod(ray.d); 
       min_t = fmin(first_t,second_t);
       
+      if(min_t<tmin)
+      {
+          return false_indicator;
+      }
       result = ray.o + ray.d*min_t;
     }
     
     return result;
 }
 
+parser::Vec3f triangle_intersection(parser::Scene scene,parser::Triangle triangle, ray ray,float tmin)
+{
+    parser::Vec3f a = scene.vertex_data[triangle.indices.v0_id];
+    parser::Vec3f b = scene.vertex_data[triangle.indices.v1_id];
+    parser::Vec3f c = scene.vertex_data[triangle.indices.v2_id];
+    
+    parser::Vec3f Aa(a.x-b.x,a.y-b.y,a.z-b.z);
+    parser::Vec3f Ab(a.x-c.x,a.y-c.y,a.z-c.z);
+    parser::Vec3f Ac(ray.d.x,ray.d.y,ray.d.z);
+    
+    parser::Vec3f changing(a.x-ray.o.x,a.y-ray.o.y,a.z-ray.o.z);
+    
+    float detA = find_matrix_determinant(Aa,Ab,Ac);
+    
+    float beta,gamma,t;
+    
+    beta = find_matrix_determinant(changing,Ab,Ac)/detA;
+    gamma = find_matrix_determinant(Aa,changing,Ac)/detA;
+    t = find_matrix_determinant(Aa,Ab,changing)/detA;
+    
+    if(t>tmin&&beta+gamma<=1&&beta>=0&&gamma>=0)
+    {
+        return ray.o + ray.d*t;
+    }
+    else
+    {
+        return false_indicator;
+    }
+}
 ray compute_viewing_ray(int width,int height,int i,int j,float near_distance,parser::Vec4f near_plane,parser::Vec3f e,parser::Vec3f up,parser::Vec3f gaze){
     
     /*compute vec_u*/
@@ -88,13 +129,13 @@ int main(int argc, char* argv[])
     int height = 0;
     int width = 0;
     float near_distance = 0;
+    float tmin = 0;
     
     for(int i=0;i<scene.cameras.size();i++){
         
         /*Image Height and Width in pixels*/
         height = scene.cameras[i].image_height;
         width = scene.cameras[i].image_width;
-        
         /*Gaze and Up vectors*/
         parser::Vec3f gaze = scene.cameras[i].gaze;
         parser::Vec3f up = scene.cameras[i].up;
@@ -105,11 +146,14 @@ int main(int argc, char* argv[])
 
         /*Boundaries of image plane*/
         near_distance = scene.cameras[i].near_distance;
+        
+        parser::Vec3f m = position + gaze*near_distance;
 
         
         for(int j=0;j<height;j++){
             for(int k=0;k<width;k++){
-                
+                ray viewing_ray = compute_viewing_ray(width,height,k,j,near_distance,near_plane,position,up,gaze);
+                tmin = (m - position).dotprod(gaze)/(viewing_ray.d).dotprod(gaze);
                 
             }
         }
