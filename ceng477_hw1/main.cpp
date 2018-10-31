@@ -14,237 +14,7 @@ struct ray {
     parser::Vec3f d;
 };
 
-/*parser::Vec3f mirrorfunc(int count)
-{
-    if(count>0)
-    {
-        ray viewing_ray = compute_viewing_ray(width,height,k,j,near_distance,near_plane,position,-up,gaze);
-        //viewing_ray.d.normalize();
-        parser::Vec3f nom = m-position;
-        tmin = nom.dotprod(gaze)/(viewing_ray.d).dotprod(gaze);
-        //std::cout<<tmin<<std::endl;
-        //std::cout<<"<"<<viewing_ray.o.x<<","<<viewing_ray.o.y<<","<<viewing_ray.o.z<<">"<<" + t<"<<viewing_ray.d.x<<","<<viewing_ray.d.y<<","<<viewing_ray.d.z<<">"<<" "<<k<<" "<<j<<std::endl;         
-        mint = FLT_MAX;
-        for(int l=0;l<scene.spheres.size();l++)
-        {                       
-            intersection = sphere_intersection(scene,scene.spheres[l],viewing_ray,0.9,tinner);  
-            if(intersection.x != FLT_MIN)
-            {                      
-                if(tinner<mint)
-                {
-                    mint = tinner;                          
-                    intersection_material_id = scene.spheres[l].material_id;
-                    nv = intersection - scene.vertex_data[scene.spheres[l].center_vertex_id-1];
-                    nv.normalize();
-                    final_intersection = intersection;                       
-                }
-            }
-        }
-        for(int u=0;u<scene.triangles.size();u++)
-        {
-            intersection = triangle_intersection(scene,scene.triangles[u],viewing_ray,tmin,tinner);
-            if(intersection.x != FLT_MIN)
-            {
-                //std::cout<<intersection.x<<" "<<intersection.y<<" "<<intersection.z<<std::endl;
-                if(tinner<mint)
-                {
-                    if(j==10&&k==10)
-                    {
-                        std::cout<<"ucgen var saniyor"<<std::endl;
-                    }                            
-                    //std::cout<<intersection.x<<" "<<intersection.y<<" "<<intersection.z<<std::endl;                           
-                    mint = tinner;
-                    intersection_material_id = scene.triangles[u].material_id;
-                    nv = triangle_normals[u];
-                    final_intersection = intersection;
-                }
-            }
-
-        }
-        for(int b=0;b<scene.meshes.size();b++)
-        {
-            for(int x=0;x<scene.meshes[b].faces.size();x++)
-            {
-                intersection = triangle_intersection_mesh(scene,scene.meshes[b].faces[x],viewing_ray,tmin,tinner);
-                if(intersection.x != FLT_MIN)
-                {
-                    if(tinner<mint)
-                    {                             
-                        //std::cout<<intersection.x<<" "<<intersection.y<<" "<<intersection.z<<std::endl;
-                        mint = tinner;
-                        intersection_material_id = scene.meshes[b].material_id;
-                        nv = mftriangle_normals[b][x];
-                        final_intersection = intersection;
-                    }
-                }
-
-            }
-        } 
-
-        //TO control whether ray intersected any object
-        if(intersection_material_id != INT_MIN)
-        {
-            ambient = scene.materials[intersection_material_id-1].ambient;
-            diffuse = scene.materials[intersection_material_id-1].diffuse;
-            mirror = scene.materials[intersection_material_id-1].mirror;
-            specular = scene.materials[intersection_material_id-1].specular;
-            phong_c = scene.materials[intersection_material_id-1].phong_exponent;
-
-            ambient_colour = round(ambient*scene.ambient_light);
-            calculated_colour = ambient_colour;
-
-            for(int pl=0;pl<scene.point_lights.size();pl++)
-            {
-                ray light_s;
-                light_s.o = final_intersection;
-                light_s.d = scene.point_lights[pl].position - final_intersection;
-                light_s.d.normalize();
-                light_s.o =light_s.o + light_s.d*scene.shadow_ray_epsilon;
-                float light_selami = (scene.point_lights[pl].position.x -final_intersection.x)*light_s.d.x; 
-                for(int l=0;l<scene.spheres.size();l++)
-                {
-                    intersection_s = sphere_intersection(scene,scene.spheres[l],light_s,0,tinner);
-                    if(intersection_s.x != FLT_MIN)
-                    {
-                        if(tinner<light_selami)
-                        {
-                            flag = 1;
-                            break;                                    
-                        }
-                    }
-
-                } 
-                for(int u=0;u<scene.triangles.size()&&flag==0;u++)
-                {
-                    intersection_s = triangle_intersection(scene,scene.triangles[u],light_s,0,tinner);
-                    if(intersection_s.x != FLT_MIN)
-                    {
-                        if(tinner<light_selami)
-                        {
-                            flag = 1;
-                            break;                                    
-                        }
-                    }
-
-                }
-                for(int b=0;b<scene.meshes.size()&&flag==0;b++)
-                {
-                    for(int x=0;x<scene.meshes[b].faces.size();x++)
-                    {
-                        intersection_s = triangle_intersection_mesh(scene,scene.meshes[b].faces[x],light_s,0,tinner);
-                        if(intersection_s.x != FLT_MIN)
-                        {
-                            if(tinner<light_selami)
-                            {
-                                flag = 1;
-                                break;                                    
-                            }
-                        }
-
-                    }
-                }                    
-
-                if(flag == 1)
-                {
-                    flag = 0;
-                    image_my[yer] = round(scene.ambient_light.x);
-                    image_my[yer+1] = round(scene.ambient_light.y);
-                    image_my[yer+2] = round(scene.ambient_light.z);                            
-                    continue;
-                }
-                else
-                {
-                    float zero = 0;
-
-                    //std::cout<<nv.x<<" "<<nv.y<<" "<<nv.z<<std::endl;
-
-                    parser::Vec3f dv = (scene.point_lights[pl].position - final_intersection);
-                    parser::Vec3f dv2 = dv;
-                    dv2.normalize();
-                    cosinus_uzulur = std::max(dv2.dotprod(nv),zero); 
-                    light_distance = dv.magnitude()*dv.magnitude();
-                    parser::Vec3f aab = (diffuse*cosinus_uzulur*scene.point_lights[pl].intensity);
-                    parser::Vec3f aaa = aab/light_distance;
-                    diffuse_colour = round((diffuse*cosinus_uzulur)*scene.point_lights[pl].intensity/light_distance); 
-                    //calculated_colour = calculated_colour + diffuse_colour;                          
-                    parser::Vec3f half = light_s.d - viewing_ray.d;
-                    half.normalize();
-
-                    cosinus_uzulur_specular = std::max(nv.dotprod(half),zero);
-                    specular_colour = round((specular*scene.point_lights[pl].intensity)*std::pow(cosinus_uzulur_specular,phong_c)/light_distance);
-
-                    calculated_colour = calculated_colour + diffuse_colour + specular_colour;
-                    if(calculated_colour.x<0)
-                    {
-                        calculated_colour.x = 0;
-                    }
-                    if(calculated_colour.y<0)
-                    {
-                        calculated_colour.y = 0;                               
-                    }
-                    if(calculated_colour.z<0)
-                    {
-                        calculated_colour.z = 0;                                
-                    }
-
-                    if(calculated_colour.x>255)
-                    {
-                        calculated_colour.x = 255;                                
-                    }
-                    if(calculated_colour.y>255)
-                    {
-                        calculated_colour.y = 255;                                
-                    }
-                    if(calculated_colour.z>255)
-                    {
-                        calculated_colour.z = 255;                                
-                    }
-
-                    if(k==799&&j==799)
-                    {
-                        std::cout<<"renk:"<<calculated_colour.x<<std::endl;                                
-                    }                              
-                        //std::cout<<mirror.x<<" "<<mirror.y<<" "<<mirror.z<<std::endl;                          
-                    if(mirror.x ==0&&mirror.y==0&&mirror.z==0)
-                    {
-                        image_my[yer] = calculated_colour.x;
-                        image_my[yer+1] = calculated_colour.y;
-                        image_my[yer+2] = calculated_colour.z;                                 
-                    }
-                    else
-                    {
-                        image_my[yer] = calculated_colour.x;
-                        image_my[yer+1] = calculated_colour.y;
-                        image_my[yer+2] = calculated_colour.z;                                  
-                    }
-
-                }
-
-
-            }
-        
-    }
-
-
-
-    }
-    else
-    {
-        calculated_colour = scene.background_color;
-        //std::cout<<j<<" "<<k<<std::endl;
-        image_my[yer] = calculated_colour.x;
-        image_my[yer+1] = calculated_colour.y;
-        image_my[yer+2] = calculated_colour.z;                     
-    }
-    
-    
-} */
-
-
 float epsilon = 1e-7;
-
-//ray compute_viewing_ray(parser::vec3f u,parser::vec3f v,)
-
 parser::Vec3f false_indicator(FLT_MIN,FLT_MIN,FLT_MIN);
 
 parser::Vec3i round(parser::Vec3f vec)
@@ -321,9 +91,9 @@ float find_matrix_determinant(parser::Vec3f v1, parser::Vec3f v2, parser::Vec3f 
     return determinant;
 }
 
-parser::Vec3f sphere_intersection(parser::Scene scene,parser::Sphere sphere, ray ray,float tmin,float &t)
+parser::Vec3f sphere_intersection(parser::Sphere sphere, ray ray,float tmin,float &t)
 {
-    parser::Vec3f center_vertex = scene.vertex_data[sphere.center_vertex_id-1];
+    parser::Vec3f center_vertex = sphere.center_vertex;
     parser::Vec3f result;
     
     float first_t;
@@ -332,12 +102,8 @@ parser::Vec3f sphere_intersection(parser::Scene scene,parser::Sphere sphere, ray
     parser::Vec3f ray_cv = ray.o-center_vertex;
     float determinant =pow(ray.d.dotprod(ray_cv),2) - (ray.d.dotprod(ray.d))*((ray_cv).dotprod(ray_cv) - sphere.radius*sphere.radius);
     
-    //std::cout<<"<"<<ray.o.x<<","<<ray.o.y<<","<<ray.o.z<<">"<<" + t<"<<ray.d.x<<","<<ray.d.y<<","<<ray.d.z<<">"<<std::endl;
-    //std::cout<<scene.vertex_data[sphere.center_vertex_id-1].x<<std::endl;
-    //std::cout<<determinant<<std::endl;
     if(determinant<0)
     {
-        //std::cout<<determinant<<std::endl;
         return false_indicator;
     }
     
@@ -372,11 +138,11 @@ parser::Vec3f sphere_intersection(parser::Scene scene,parser::Sphere sphere, ray
     return result;
 }
 
-parser::Vec3f triangle_intersection(parser::Scene scene,parser::Triangle triangle, ray ray,float tmin,float &t)
+parser::Vec3f triangle_intersection(parser::Triangle triangle, ray ray,float tmin,float &t)
 {
-    parser::Vec3f a = scene.vertex_data[triangle.indices.v0_id-1];
-    parser::Vec3f b = scene.vertex_data[triangle.indices.v1_id-1];
-    parser::Vec3f c = scene.vertex_data[triangle.indices.v2_id-1];
+    parser::Vec3f a = triangle.indices.v0;
+    parser::Vec3f b = triangle.indices.v1;
+    parser::Vec3f c = triangle.indices.v2;
     
     parser::Vec3f Aa(a.x-b.x,a.y-b.y,a.z-b.z);
     parser::Vec3f Ab(a.x-c.x,a.y-c.y,a.z-c.z);
@@ -401,12 +167,11 @@ parser::Vec3f triangle_intersection(parser::Scene scene,parser::Triangle triangl
         return false_indicator;
     }
 }
-
-parser::Vec3f triangle_intersection_s(parser::Scene scene,parser::Triangle triangle, ray ray,float &t)
+parser::Vec3f triangle_intersection_mesh(parser::Face triangle, ray ray,float tmin,float &t)
 {
-    parser::Vec3f a = scene.vertex_data[triangle.indices.v0_id-1];
-    parser::Vec3f b = scene.vertex_data[triangle.indices.v1_id-1];
-    parser::Vec3f c = scene.vertex_data[triangle.indices.v2_id-1];
+    parser::Vec3f a = triangle.v0;
+    parser::Vec3f b = triangle.v1;
+    parser::Vec3f c = triangle.v2;
     
     parser::Vec3f Aa(a.x-b.x,a.y-b.y,a.z-b.z);
     parser::Vec3f Ab(a.x-c.x,a.y-c.y,a.z-c.z);
@@ -422,111 +187,8 @@ parser::Vec3f triangle_intersection_s(parser::Scene scene,parser::Triangle trian
     gamma = find_matrix_determinant(Aa,changing,Ac)/detA;
     t = find_matrix_determinant(Aa,Ab,changing)/detA;
     
-    
-    if(beta+gamma<=1&&beta>=0&&gamma>=0)
-    {
-        return ray.o + ray.d*t;
-    }
-    else
-    {
-        return false_indicator;
-    }
-}
-
-bool sphere_intersection_s(parser::Scene scene,parser::Sphere sphere, ray ray,float light_selami,float &t)
-{
-    parser::Vec3f center_vertex = scene.vertex_data[sphere.center_vertex_id-1];
-    parser::Vec3f result;
-    
-    float first_t;
-    float second_t;
-    float min_t;
-    parser::Vec3f ray_cv = ray.o-center_vertex;
-    float determinant =pow(ray.d.dotprod(ray_cv),2) - (ray.d.dotprod(ray.d))*((ray_cv).dotprod(ray_cv) - sphere.radius*sphere.radius);
-    
-    if(determinant<0)
-    {
-        return false;
-    }
-    
-    else if(determinant == 0)
-    {
-      t =(-ray.d.dotprod(ray.o-center_vertex))/ray.d.dotprod(ray.d);
-      if(t>light_selami)
-      {
-          return false;
-      }
-      result = ray.o + ray.d*t;
-      return true;
-    }
-    
-    else
-    {
-      first_t = (-ray.d.dotprod(ray.o-center_vertex) + sqrt(determinant))/ray.d.dotprod(ray.d);        
-      second_t = (-ray.d.dotprod(ray.o-center_vertex) - sqrt(determinant))/ray.d.dotprod(ray.d); 
-      min_t = fmin(first_t,second_t);
-      t = min_t;
-      if(min_t>light_selami)
-      {
-          return false;
-      }
-      result = ray.o + ray.d*min_t;
-    }
-    
-    return true;
-}
-
-parser::Vec3f triangle_intersection_mesh(parser::Scene scene,parser::Face triangle, ray ray,float tmin,float &t)
-{
-    parser::Vec3f a = scene.vertex_data[triangle.v0_id-1];
-    parser::Vec3f b = scene.vertex_data[triangle.v1_id-1];
-    parser::Vec3f c = scene.vertex_data[triangle.v2_id-1];
-    
-    parser::Vec3f Aa(a.x-b.x,a.y-b.y,a.z-b.z);
-    parser::Vec3f Ab(a.x-c.x,a.y-c.y,a.z-c.z);
-    parser::Vec3f Ac(ray.d.x,ray.d.y,ray.d.z);
-    
-    parser::Vec3f changing(a.x-ray.o.x,a.y-ray.o.y,a.z-ray.o.z);
-    
-    float detA = find_matrix_determinant(Aa,Ab,Ac);
-    
-    float beta,gamma;
-    
-    beta = find_matrix_determinant(changing,Ab,Ac)/detA;
-    gamma = find_matrix_determinant(Aa,changing,Ac)/detA;
-    t = find_matrix_determinant(Aa,Ab,changing)/detA;
     
     if(t>tmin&&beta+gamma<=1+epsilon&&beta>=0-epsilon&&gamma>=0-epsilon)
-    {
-        return ray.o + ray.d*t;
-    }
-    else
-    {
-        return false_indicator;
-    }
-}
-
-parser::Vec3f triangle_intersection_mesh_s(parser::Scene scene,parser::Face triangle, ray ray,float &t)
-{
-    parser::Vec3f a = scene.vertex_data[triangle.v0_id-1];
-    parser::Vec3f b = scene.vertex_data[triangle.v1_id-1];
-    parser::Vec3f c = scene.vertex_data[triangle.v2_id-1];
-    
-    parser::Vec3f Aa(a.x-b.x,a.y-b.y,a.z-b.z);
-    parser::Vec3f Ab(a.x-c.x,a.y-c.y,a.z-c.z);
-    parser::Vec3f Ac(ray.d.x,ray.d.y,ray.d.z);
-    
-    parser::Vec3f changing(a.x-ray.o.x,a.y-ray.o.y,a.z-ray.o.z);
-    
-    float detA = find_matrix_determinant(Aa,Ab,Ac);
-    
-    float beta,gamma;
-    
-    beta = find_matrix_determinant(changing,Ab,Ac)/detA;
-    gamma = find_matrix_determinant(Aa,changing,Ac)/detA;
-    t = find_matrix_determinant(Aa,Ab,changing)/detA;
-    
-    if(beta+gamma<=1&&beta>=0&&gamma>=0)
     {
         return ray.o + ray.d*t;
     }
@@ -557,12 +219,8 @@ ray compute_viewing_ray(int width,int height,int i,int j,float near_distance,par
     ray result;
     result.o = e;
     result.d = d;
-    
     result.d.normalize();
-    //std::cout<<"<"<<result.o.x<<","<<result.o.y<<","<<result.o.z<<">"<<" + t<"<<result.d.x<<","<<result.d.y<<","<<result.d.z<<">"<<" "<<i<<" "<<j<<std::endl;
-    
     return result;
-      
 }
 
 int main(int argc, char* argv[])
@@ -577,10 +235,11 @@ int main(int argc, char* argv[])
     int width = 0;
     float near_distance = 0;
     float tmin = 0;
- 
+    parser::Vec3f ambient_light = scene.ambient_light;
     float cosinus_uzulur;
     float cosinus_uzulur_specular;
     float light_distance;
+    float light_selami;
     
     std::vector<parser::Vec3f> triangle_normals;
     
@@ -588,13 +247,40 @@ int main(int argc, char* argv[])
     
     std::vector<std::vector<parser::Vec3f>> mftriangle_normals(scene.meshes.size());
             
-
-    /*This is for precomputing triangles in the file*/
-    for(int i=0;i<scene.triangles.size();i++)
+    std::vector<parser::Material> meshmaterials;
+    
+    std::vector<parser::Material> trianglematerials;
+    
+    std::vector<parser::Material> spherematerials;
+    
+    std::vector<parser::Material> all_materials = scene.materials;
+    
+    std::vector<parser::Triangle> triangles = scene.triangles;
+    
+    std::vector<parser::Mesh> meshess = scene.meshes;
+    
+    std::vector<parser::Sphere> spheres = scene.spheres;
+    
+    std::vector<parser::Vec3f> vertex_data = scene.vertex_data;
+    
+    std::vector<parser::PointLight> point_lights = scene.point_lights;
+    for(int i=0;i<spheres.size();i++)
     {
-        parser::Vec3f a = scene.vertex_data[scene.triangles[i].indices.v0_id-1];
-        parser::Vec3f b = scene.vertex_data[scene.triangles[i].indices.v1_id-1];
-        parser::Vec3f c = scene.vertex_data[scene.triangles[i].indices.v2_id-1];
+        spheres[i].center_vertex = vertex_data[spheres[i].center_vertex_id-1];
+        spheres[i].material = all_materials[spheres[i].material_id-1];
+    }    
+    
+    
+    /*This is for precomputing triangles in the file*/
+    for(int i=0;i<triangles.size();i++)
+    {
+        parser::Vec3f a = vertex_data[triangles[i].indices.v0_id-1];
+        parser::Vec3f b = vertex_data[triangles[i].indices.v1_id-1];
+        parser::Vec3f c = vertex_data[triangles[i].indices.v2_id-1];
+        triangles[i].indices.v0 = a;
+        triangles[i].indices.v1 = b;
+        triangles[i].indices.v2 = c;
+        triangles[i].material = all_materials[triangles[i].material_id-1];        
         
         parser::Vec3f v1 = a-b;
         parser::Vec3f v2 = c-b;
@@ -604,14 +290,19 @@ int main(int argc, char* argv[])
     }
     
     /* This for precomputing the triangles' normals in meshes*/
-    for(int i=0;i<scene.meshes.size();i++)
+    for(int i=0;i<meshess.size();i++)
     {
-        for(int j=0;j<scene.meshes[i].faces.size();j++)
+        meshess[i].material = all_materials[meshess[i].material_id-1];
+        for(int j=0;j<meshess[i].faces.size();j++)
         {
-            parser::Vec3f mfa = scene.vertex_data[scene.meshes[i].faces[j].v0_id-1];
-            parser::Vec3f mfb = scene.vertex_data[scene.meshes[i].faces[j].v1_id-1];
-            parser::Vec3f mfc = scene.vertex_data[scene.meshes[i].faces[j].v2_id-1]; 
-
+            parser::Vec3f mfa = scene.vertex_data[meshess[i].faces[j].v0_id-1];
+            parser::Vec3f mfb = scene.vertex_data[meshess[i].faces[j].v1_id-1];
+            parser::Vec3f mfc = scene.vertex_data[meshess[i].faces[j].v2_id-1]; 
+            meshess[i].faces[j].v0 = mfa;
+            meshess[i].faces[j].v1 = mfb;
+            meshess[i].faces[j].v2 = mfc;
+            
+                    
             parser::Vec3f mfv1 = mfa-mfb;
             parser::Vec3f mfv2 = mfc-mfb;
             parser::Vec3f mfnormal = mfv2.crossprod(mfv1);
@@ -648,7 +339,10 @@ int main(int argc, char* argv[])
         float mint = FLT_MAX;
         float tinner;
         
-        int intersection_material_id = INT_MIN;
+        parser::Material bos;
+        bos.phong_exponent = FLT_MIN;
+        
+        parser::Material intersection_material = bos;
         
         parser::Vec3f nv;
         
@@ -666,7 +360,6 @@ int main(int argc, char* argv[])
         parser::Vec3i diffuse_colour;
         parser::Vec3i mirror_colour;
         parser::Vec3i specular_colour;
-        
         int flag = 0;
         
         unsigned char* image_my = new unsigned char [width * height * 3]; 
@@ -681,85 +374,75 @@ int main(int argc, char* argv[])
                 //std::cout<<tmin<<std::endl;
                 //std::cout<<"<"<<viewing_ray.o.x<<","<<viewing_ray.o.y<<","<<viewing_ray.o.z<<">"<<" + t<"<<viewing_ray.d.x<<","<<viewing_ray.d.y<<","<<viewing_ray.d.z<<">"<<" "<<k<<" "<<j<<std::endl;         
                 mint = FLT_MAX;
-                for(int l=0;l<scene.spheres.size();l++)
+                for(int l=0;l<spheres.size();l++)
                 {                       
-                    intersection = sphere_intersection(scene,scene.spheres[l],viewing_ray,0.9,tinner);  
+                    intersection = sphere_intersection(spheres[l],viewing_ray,0,tinner);  
                     if(intersection.x != FLT_MIN)
                     {                      
                         if(tinner<mint)
                         {
                             mint = tinner;                          
-                            intersection_material_id = scene.spheres[l].material_id;
-                            nv = intersection - scene.vertex_data[scene.spheres[l].center_vertex_id-1];
+                            intersection_material = spheres[l].material;
+                            nv = intersection - spheres[l].center_vertex;
                             nv.normalize();
                             final_intersection = intersection;                       
                         }
                     }
                 }
-                for(int u=0;u<scene.triangles.size();u++)
+                for(int u=0;u<triangles.size();u++)
                 {
-                    intersection = triangle_intersection(scene,scene.triangles[u],viewing_ray,tmin,tinner);
+                    intersection = triangle_intersection(triangles[u],viewing_ray,0,tinner);
                     if(intersection.x != FLT_MIN)
                     {
-                        //std::cout<<intersection.x<<" "<<intersection.y<<" "<<intersection.z<<std::endl;
                         if(tinner<mint)
-                        {
-                            if(j==10&&k==10)
-                            {
-                                std::cout<<"ucgen var saniyor"<<std::endl;
-                            }                            
-                            //std::cout<<intersection.x<<" "<<intersection.y<<" "<<intersection.z<<std::endl;                           
+                        {                                               
                             mint = tinner;
-                            intersection_material_id = scene.triangles[u].material_id;
+                            intersection_material = triangles[u].material;
                             nv = triangle_normals[u];
                             final_intersection = intersection;
                         }
-                    }
-                    
+                    }   
                 }
-                for(int b=0;b<scene.meshes.size();b++)
+                for(int b=0;b<meshess.size();b++)
                 {
-                    for(int x=0;x<scene.meshes[b].faces.size();x++)
-                    {
-                        intersection = triangle_intersection_mesh(scene,scene.meshes[b].faces[x],viewing_ray,tmin,tinner);
+                    for(int x=0;x<meshess[b].faces.size();x++)
+                    {                      
+                        intersection = triangle_intersection_mesh(meshess[b].faces[x],viewing_ray,0,tinner);
                         if(intersection.x != FLT_MIN)
-                        {
+                        {                                             
                             if(tinner<mint)
-                            {                             
-                                //std::cout<<intersection.x<<" "<<intersection.y<<" "<<intersection.z<<std::endl;
+                            {              
                                 mint = tinner;
-                                intersection_material_id = scene.meshes[b].material_id;
+                                intersection_material = meshess[b].material;
                                 nv = mftriangle_normals[b][x];
                                 final_intersection = intersection;
                             }
-                        }
-                        
+                        }                     
                     }
                 } 
-                
                 /*TO control whether ray intersected any object*/
-                if(intersection_material_id != INT_MIN)
+                if(intersection_material.phong_exponent != FLT_MIN)
                 {
-                    ambient = scene.materials[intersection_material_id-1].ambient;
-                    diffuse = scene.materials[intersection_material_id-1].diffuse;
-                    mirror = scene.materials[intersection_material_id-1].mirror;
-                    specular = scene.materials[intersection_material_id-1].specular;
-                    phong_c = scene.materials[intersection_material_id-1].phong_exponent;
-                    
-                    ambient_colour = round(ambient*scene.ambient_light);
+                    ambient = intersection_material.ambient;
+                    diffuse = intersection_material.diffuse;
+                    mirror = intersection_material.mirror;
+                    specular = intersection_material.specular;
+                    phong_c = intersection_material.phong_exponent;           
+                    ambient_colour = round(ambient*ambient_light);
                     calculated_colour = ambient_colour;
                     
-                    for(int pl=0;pl<scene.point_lights.size();pl++)
+                    for(int pl=0;pl<point_lights.size();pl++)
                     {
                         ray light_s;
                         light_s.o = final_intersection;
-                        light_s.d = scene.point_lights[pl].position - final_intersection;
+                        light_s.d = point_lights[pl].position - final_intersection;
                         light_s.d.normalize();
                         light_s.o =light_s.o + light_s.d*scene.shadow_ray_epsilon;
-                        float light_selami = (scene.point_lights[pl].position.x -final_intersection.x)*light_s.d.x; 
-                        for(int l=0;l<scene.spheres.size();l++)
+                        
+                        light_selami = (point_lights[pl].position.x - light_s.o.x)/light_s.d.x;
+                        for(int l=0;l<spheres.size();l++)
                         {
-                            intersection_s = sphere_intersection(scene,scene.spheres[l],light_s,0,tinner);
+                            intersection_s = sphere_intersection(spheres[l],light_s,0,tinner);
                             if(intersection_s.x != FLT_MIN)
                             {
                                 if(tinner<light_selami)
@@ -770,9 +453,9 @@ int main(int argc, char* argv[])
                             }
                        
                         } 
-                        for(int u=0;u<scene.triangles.size()&&flag==0;u++)
+                        for(int u=0;u<triangles.size()&&flag==0;u++)
                         {
-                            intersection_s = triangle_intersection(scene,scene.triangles[u],light_s,0,tinner);
+                            intersection_s = triangle_intersection(triangles[u],light_s,0,tinner);
                             if(intersection_s.x != FLT_MIN)
                             {
                                 if(tinner<light_selami)
@@ -783,11 +466,11 @@ int main(int argc, char* argv[])
                             }
 
                         }
-                        for(int b=0;b<scene.meshes.size()&&flag==0;b++)
+                        for(int b=0;b<meshess.size()&&flag==0;b++)
                         {
-                            for(int x=0;x<scene.meshes[b].faces.size();x++)
+                            for(int x=0;x<meshess[b].faces.size();x++)
                             {
-                                intersection_s = triangle_intersection_mesh(scene,scene.meshes[b].faces[x],light_s,0,tinner);
+                                intersection_s = triangle_intersection_mesh(meshess[b].faces[x],light_s,0,tinner);
                                 if(intersection_s.x != FLT_MIN)
                                 {
                                     if(tinner<light_selami)
@@ -799,35 +482,31 @@ int main(int argc, char* argv[])
 
                             }
                         }                    
-                        
                         if(flag == 1)
                         {
                             flag = 0;
-                            image_my[yer] = round(scene.ambient_light.x);
-                            image_my[yer+1] = round(scene.ambient_light.y);
-                            image_my[yer+2] = round(scene.ambient_light.z);                            
+                            image_my[yer] = round(ambient_light.x);
+                            image_my[yer+1] = round(ambient_light.y);
+                            image_my[yer+2] = round(ambient_light.z);                            
                             continue;
                         }
                         else
                         {
-                            float zero = 0;
-                            
-                            //std::cout<<nv.x<<" "<<nv.y<<" "<<nv.z<<std::endl;
-                            
-                            parser::Vec3f dv = (scene.point_lights[pl].position - final_intersection);
+                            float zero = 0;                            
+                            parser::Vec3f dv = (point_lights[pl].position - final_intersection);
                             parser::Vec3f dv2 = dv;
                             dv2.normalize();
                             cosinus_uzulur = std::max(dv2.dotprod(nv),zero); 
                             light_distance = dv.magnitude()*dv.magnitude();
-                            parser::Vec3f aab = (diffuse*cosinus_uzulur*scene.point_lights[pl].intensity);
+                            parser::Vec3f aab = (diffuse*cosinus_uzulur*point_lights[pl].intensity);
                             parser::Vec3f aaa = aab/light_distance;
-                            diffuse_colour = round((diffuse*cosinus_uzulur)*scene.point_lights[pl].intensity/light_distance); 
+                            diffuse_colour = round((diffuse*cosinus_uzulur)*point_lights[pl].intensity/light_distance); 
                             //calculated_colour = calculated_colour + diffuse_colour;                          
                             parser::Vec3f half = light_s.d - viewing_ray.d;
                             half.normalize();
                             
                             cosinus_uzulur_specular = std::max(nv.dotprod(half),zero);
-                            specular_colour = round((specular*scene.point_lights[pl].intensity)*std::pow(cosinus_uzulur_specular,phong_c)/light_distance);
+                            specular_colour = round((specular*point_lights[pl].intensity)*std::pow(cosinus_uzulur_specular,phong_c)/light_distance);
                             
                             calculated_colour = calculated_colour + diffuse_colour + specular_colour;
                             if(calculated_colour.x<0)
@@ -855,12 +534,7 @@ int main(int argc, char* argv[])
                             {
                                 calculated_colour.z = 255;                                
                             }
-                            
-                            if(k==799&&j==799)
-                            {
-                                std::cout<<"renk:"<<calculated_colour.x<<std::endl;                                
-                            }                              
-                                //std::cout<<mirror.x<<" "<<mirror.y<<" "<<mirror.z<<std::endl;                          
+                                                     
                             if(mirror.x ==0&&mirror.y==0&&mirror.z==0)
                             {
                                 image_my[yer] = calculated_colour.x;
@@ -873,76 +547,19 @@ int main(int argc, char* argv[])
                                 image_my[yer+1] = calculated_colour.y;
                                 image_my[yer+2] = calculated_colour.z;                                  
                             }
-                            
-                        }
-                        
-                        
-                    }
-
-                    
-                            
+                        }  
+                    }                          
                 }
                 else
                 {
                     calculated_colour = scene.background_color;
-                    //std::cout<<j<<" "<<k<<std::endl;
                     image_my[yer] = calculated_colour.x;
                     image_my[yer+1] = calculated_colour.y;
                     image_my[yer+2] = calculated_colour.z;                     
                 }
-                
-                
-                
-                intersection_material_id = INT_MIN;                  
+                intersection_material = bos;                  
             }
-         
-        }
-        char *eren;
-        
-
-        
-            write_ppm(scene.cameras[i].image_name.c_str(), image_my, height, width);
-        
-        
-        
-        
-        
-        
+        }          
+            write_ppm(scene.cameras[i].image_name.c_str(), image_my, height, width);    
     }
-
-    // The code below creates a test pattern and writes
-    // it to a PPM file to demonstrate the usage of the
-    // ppm_write function.
-
-    const RGB BAR_COLOR[8] =
-    {
-        { 255, 255, 255 },  // 100% White
-        { 255, 255,   0 },  // Yellow
-        {   0, 255, 255 },  // Cyan
-        {   0, 255,   0 },  // Green
-        { 255,   0, 255 },  // Magenta
-        { 255,   0,   0 },  // Red
-        {   0,   0, 255 },  // Blue
-        {   0,   0,   0 },  // Black
-    };
-
-    width = 640, height = 480;
-    int columnWidth = width / 8;
-
-    unsigned char* image = new unsigned char [width * height * 3];
-
-    int i = 0;
-    for (int y = 0; y < height; ++y)
-    {
-        for (int x = 0; x < width; ++x)
-        {
-            int colIdx = x / columnWidth;
-            image[i++] = BAR_COLOR[colIdx][0];
-            image[i++] = BAR_COLOR[colIdx][1];
-            image[i++] = BAR_COLOR[colIdx][2];
-        }
-    }
-
-    write_ppm("dsa", image, width, height);
-
 }
