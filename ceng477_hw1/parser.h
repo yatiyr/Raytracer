@@ -59,7 +59,7 @@ namespace parser
             return x*vec.x + y*vec.y + z*vec.z;
         } */
         
-        double magnitude() const
+        float magnitude() const
         {
             return sqrt(x*x+y*y+z*z);
         }
