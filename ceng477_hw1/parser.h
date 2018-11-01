@@ -30,20 +30,20 @@ namespace parser
             return x*vec.x + y*vec.y + z*vec.z; 
         }
         
-        Vec3f operator-(const Vec3f& vec) const
+        Vec3f operator-(const Vec3f& vec) 
         {
             return Vec3f(x-vec.x,y-vec.y,z-vec.z);
         }
         
-        Vec3f operator-() const
+        Vec3f operator-() 
         {
             return Vec3f(-x,-y,-z);
         }
         
-        Vec3f operator+(const Vec3f& vec) const
+        Vec3f operator+(const Vec3f& vec) 
         {
             return Vec3f(vec.x+x,vec.y+y,vec.z+z);
-        }
+        }      
         
         Vec3f& normalize()
         {
@@ -75,27 +75,27 @@ namespace parser
             return Vec3f(y*vec.z - vec.y*z,-(x*vec.z-vec.x*z),x*vec.y-vec.x*y);
         }
         
-        Vec3f operator*(int a) const
+        Vec3f operator*(int a) 
         {
             return Vec3f(x*a,y*a,z*a);
         }
-        Vec3f operator*(float a) const
+        Vec3f operator*(float a) 
         {
             return Vec3f(x*a,y*a,z*a);
         }
-        Vec3f operator*(double a) const
+        Vec3f operator*(double a) 
         {
             return Vec3f(x*a,y*a,z*a);
         }
-        Vec3f operator*(const Vec3f& vec) const
+        Vec3f operator*(const Vec3f& vec)
         {
             return Vec3f(x*vec.x,y*vec.y,z*vec.z);
         } 
-        Vec3f operator/(const Vec3f& vec) const
+        Vec3f operator/(const Vec3f& vec) 
         {
             return Vec3f(x/vec.x,y/vec.y,z/vec.z);
         }
-        Vec3f operator/(float vec) const
+        Vec3f operator/(float vec) 
         {
             return Vec3f(x/vec,y/vec,z/vec);
         }           
@@ -108,19 +108,23 @@ namespace parser
         Vec3i(int x=0,int y=0,int z=0): x(x),y(y),z(z)
         {            
         }
-        Vec3i operator-(const Vec3i& vec) const
+        Vec3i operator-(const Vec3i& vec) 
         {
             return Vec3i(x-vec.x,y-vec.y,z-vec.z);
         }
         
-        Vec3i operator+(const Vec3i& vec) const
+        Vec3i operator+(const Vec3i& vec) 
         {
             return Vec3i(vec.x+x,vec.y+y,vec.z+z);
-        }     
-        Vec3i operator*(const Vec3i& vec) const
+        }          
+        Vec3i operator*(const Vec3i& vec) 
         {
             return Vec3i(x*vec.x,y*vec.y,z*vec.z);
-        }        
+        }    
+        Vec3i operator*(const Vec3f& vec)
+        {
+            return Vec3i(round(x*vec.x),round(y*vec.y),round(z*vec.z));
+        }         
     };
 
     struct Vec4f
