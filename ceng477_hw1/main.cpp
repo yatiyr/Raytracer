@@ -614,7 +614,7 @@ int main(int argc, char* argv[])
         
         for(int j=0;j<height;j++){
             for(int k=0;k<width;k++){
-                int yer = height*j*3 + k*3;
+                int yer = (width*3)*j + k*3;
                 ray viewing_ray = compute_viewing_ray(width,height,k,j,near_distance,near_plane,position,up,gaze);                   
                 //viewing_ray.d.normalize();
                 parser::Vec3f nom = m-position;
@@ -843,6 +843,6 @@ int main(int argc, char* argv[])
                 intersection_material = bos;                  
             }
         }          
-            write_ppm(scene.cameras[i].image_name.c_str(), image_my, height, width);    
+            write_ppm(scene.cameras[i].image_name.c_str(), image_my, width, height);    
     }
 }
